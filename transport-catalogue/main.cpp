@@ -4,7 +4,7 @@
 #include "geo.h"
 #include "input_reader.h"
 #include "stat_reader.h"
-#include "log_duration.h"
+//#include "log_duration.h"
 
 
 int main()

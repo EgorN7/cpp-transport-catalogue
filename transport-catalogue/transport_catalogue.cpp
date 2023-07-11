@@ -4,7 +4,6 @@
 #include<algorithm>
 #include <sstream>
 
-using namespace std::literals;
  
  
 bool TransportCatalogue::details::Stop::operator==(const Stop& rhs) const
@@ -159,46 +158,4 @@ TransportCatalogue::details::StopInfo TransportCatalogue::TransportCatalogue::Se
     } else {
         return temp_stop;
     }
-}
-
-void TransportCatalogue::TransportCatalogue::PrintStopInfo(const std::string& find_stop_name, std::ostream& out) {
-    out << SearchStop(find_stop_name) << std::endl;
-
-}
-void TransportCatalogue::TransportCatalogue::PrintBusInfo(const std::string& find_bus_name, std::ostream& out) {
-    out << GetBusInfo(find_bus_name) << std::endl;
-}
-
-
-
-std::ostream& operator<<(std::ostream& out, const TransportCatalogue::details::StopInfo& stop_info)
-{
-    out << "Stop "s << stop_info.stop_name;
-    if (!stop_info.in_cataloge) {
-        out << ": not found"s;
-        return out;
-    }
-    if (stop_info.buses.empty()) {
-        out << ": no buses"s;
-        return out;
-    }
-    out << ": buses"s;
-    for (const auto& bus : stop_info.buses) {
-        out << ' ' << bus;
-    }
-    return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const TransportCatalogue::details::BusInfo& bus_info)
-{
-    out << "Bus "s << bus_info.bus_name;
-    if (!bus_info.in_cataloge) {
-        out << ": not found"s;
-        return out;
-    }
-    out << ": "s << bus_info.stops_on_route << " stops on route, "s
-        << bus_info.unique_stops << " unique stops, "s
-        << bus_info.route_length << " route length, "s
-        << bus_info.curvature << " curvature"s;
-    return out;
 }

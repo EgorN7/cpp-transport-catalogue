@@ -80,9 +80,6 @@ namespace TransportCatalogue {
         details::StopInfo SearchStop(const std::string& find_stop_name) const;
         details::BusInfo GetBusInfo(const std::string& find_bus_name) const;
 
-        void PrintStopInfo(const std::string& find_stop_name, std::ostream& out);
-        void PrintBusInfo(const std::string& find_bus_name, std::ostream& out);
-
     private:
 
         std::deque<details::Stop> stops_;
@@ -100,5 +97,3 @@ namespace TransportCatalogue {
     };
 }
 
-std::ostream& operator<< (std::ostream& out, const TransportCatalogue::details::StopInfo& stop_info);
-std::ostream& operator<< (std::ostream& out, const TransportCatalogue::details::BusInfo& bus_info);
