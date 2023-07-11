@@ -34,6 +34,12 @@ namespace TransportCatalogue {
             bool operator!=(const Bus& rhs) const;
         };
 
+        struct BusRouteDistance 
+        {
+            int real_distance = 0;
+            double coordinates_distance = 0;
+        };
+
         struct StopInfo 
         {
             std::string stop_name;
@@ -52,7 +58,7 @@ namespace TransportCatalogue {
         };
 
         struct StopsHasher {
-            size_t operator() (const std::pair<std::string, std::string>& stop_to_stop) const;
+            size_t operator() (const std::pair<Stop*, Stop*>& stop_to_stop) const;
 
         private:
             std::hash<std::string> hasher_;
@@ -64,18 +70,18 @@ namespace TransportCatalogue {
     public:
 
 
-        void AddStop(const std::string& name, double lat, double lng,const std::vector<std::pair<std::string, int>>& distances);
-
+        void AddStop(const std::string& name, const Coordinates& coordinates);
         void AddBus(const std::string& bus_name, const std::vector<std::string>& stops, bool circle);
+        void AddDistanceBetweenStops(const std::string& first_stop, const std::string& second_stop, int distance_between_stops);
 
         details::Stop* FindStop(std::string_view find_name) const;
         details::Bus* FindBus(std::string_view find_name) const;
 
-        double DistanceCoord(details::Bus* bus) const;
-
         details::StopInfo SearchStop(const std::string& find_stop_name) const;
         details::BusInfo GetBusInfo(const std::string& find_bus_name) const;
 
+        void PrintStopInfo(const std::string& find_stop_name, std::ostream& out);
+        void PrintBusInfo(const std::string& find_bus_name, std::ostream& out);
 
     private:
 
@@ -87,7 +93,12 @@ namespace TransportCatalogue {
 
         std::unordered_map<std::string_view, details::Bus*>  busname_to_bus_;
 
-        std::unordered_map<std::pair<std::string, std::string>, int, details::StopsHasher>  distance_;
+        std::unordered_map<std::pair<details::Stop*, details::Stop*>, int, details::StopsHasher>  distance_;
 
+        int GetDistanceBetweenTwoStops(details::Stop* first_stop, details::Stop* second_stop) const;
+        details::BusRouteDistance GetBusRouteDistance(details::Bus* bus) const;
     };
 }
+
+std::ostream& operator<< (std::ostream& out, const TransportCatalogue::details::StopInfo& stop_info);
+std::ostream& operator<< (std::ostream& out, const TransportCatalogue::details::BusInfo& bus_info);

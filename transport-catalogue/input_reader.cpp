@@ -2,13 +2,11 @@
 #include <map>
 #include <unordered_set>
 
-void InputReader::ParseStop(TransportCatalogue::TransportCatalogue& transport_catalogue,const std::string& str)
+void InputReader::ParseStop(TransportCatalogue::TransportCatalogue& transport_catalogue,const std::string& str
+    , std::vector<std::pair<std::string, std::string>>& distance_between_stops)
 {
     std::string stop_name;
-    double lat = 0;
-    double lng = 0;
-    std::vector<std::pair<std::string, int>> vector_distances;
-
+    Coordinates coordinates;
 
     size_t colon_position = str.find_first_of(':');
     stop_name = str.substr(0, colon_position);
@@ -19,36 +17,36 @@ void InputReader::ParseStop(TransportCatalogue::TransportCatalogue& transport_ca
     size_t p_longitude1 = str.find_first_not_of(' ', p_latitude2 + 1);
     size_t p_longitude2 = str.find_first_of(',', p_longitude1);
 
-    lat = std::stod(str.substr(p_latitude1, p_latitude2 - p_latitude1));
-    lng = std::stod(str.substr(p_longitude1, p_longitude2 - p_longitude1));
+    coordinates.lat = std::stod(str.substr(p_latitude1, p_latitude2 - p_latitude1));
+    coordinates.lng = std::stod(str.substr(p_longitude1, p_longitude2 - p_longitude1));
  
-
     size_t start_pos = p_longitude2;
     while (start_pos != -1)
     {
         size_t start_distances = str.find_first_not_of(' ', start_pos + 1);
         size_t end_distance = str.find_first_of(',', start_distances);
-        vector_distances.push_back(ParseStopDistances(str.substr(start_distances, end_distance - start_distances)));
+        distance_between_stops.push_back(std::make_pair(stop_name, str.substr(start_distances, end_distance - start_distances)));
         start_pos = end_distance;
     }
  
-    transport_catalogue.AddStop(stop_name, lat, lng, vector_distances);
+    transport_catalogue.AddStop(stop_name, coordinates);
  
 }
  
-std::pair<std::string, int> InputReader::ParseStopDistances(const std::string& str_distances)
+void InputReader::ParseStopDistances(TransportCatalogue::TransportCatalogue& transport_catalogue
+    , const std::string& first_stop, const std::string& str_distances_to_next_stop)
 {
     std::string str_dis;
-    size_t m_position = str_distances.find_first_of('m');
-    str_dis = str_distances.substr(0, m_position);
+    size_t m_position = str_distances_to_next_stop.find_first_of('m');
+    str_dis = str_distances_to_next_stop.substr(0, m_position);
 
-    int dist = stoi(str_dis);
+    int distance_between_stops = stoi(str_dis);
 
-    size_t space_pos = str_distances.find_first_not_of(' ', m_position + 4);
+    size_t space_pos = str_distances_to_next_stop.find_first_not_of(' ', m_position + 4);
 
-    std::string stop = str_distances.substr(space_pos);
+    std::string second_stop = str_distances_to_next_stop.substr(space_pos);
 
-    return std::make_pair(stop, dist);
+    transport_catalogue.AddDistanceBetweenStops(first_stop, second_stop, distance_between_stops);
 }
  
  
@@ -83,6 +81,7 @@ void InputReader::ParseBus(TransportCatalogue::TransportCatalogue& transport_cat
 void InputReader::Parse(TransportCatalogue::TransportCatalogue& transport_catalogue, std::istream& in)
 {
     std::vector <std::string> request_buses;
+    std::vector<std::pair<std::string, std::string>> distance_between_stops;
  
     std::string str;
     int n = 0;
@@ -93,7 +92,7 @@ void InputReader::Parse(TransportCatalogue::TransportCatalogue& transport_catalo
         getline(in, str);
         if (str[0] == 'S')
         {
-            ParseStop(transport_catalogue, str.substr(5));
+            ParseStop(transport_catalogue, str.substr(5), distance_between_stops);
         }
         else if (str[0] == 'B')
         {
@@ -101,6 +100,10 @@ void InputReader::Parse(TransportCatalogue::TransportCatalogue& transport_catalo
         }
  
     }
+    for (const auto& [first_stop, str_distances_to_next_stop] : distance_between_stops) {
+        ParseStopDistances(transport_catalogue, first_stop, str_distances_to_next_stop);
+    }
+
     for (const std::string& request_bus : request_buses){
         ParseBus(transport_catalogue, request_bus);
     }
