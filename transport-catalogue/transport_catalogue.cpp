@@ -7,11 +7,11 @@
  
 bool TransportCatalogue::details::Stop::operator==(const Stop& rhs) const
 {
-    return this->stop_name == rhs.stop_name;
+    return stop_name == rhs.stop_name;
 }
 bool TransportCatalogue::details::Stop::operator!=(const Stop& rhs) const
 {
-    return !(this->stop_name == rhs.stop_name);
+    return !(stop_name == rhs.stop_name);
 }
  
 TransportCatalogue::details::Stop::Stop() {}
@@ -28,42 +28,56 @@ bool TransportCatalogue::details::Bus::operator!=(const Bus& rhs) const
 {
     return !(bus_name == rhs.bus_name);
 }
- 
-void TransportCatalogue::TransportCatalogue::AddStop(details::Stop  stop)
+
+
+size_t TransportCatalogue::details::StopsHasher::operator()(const std::pair<std::string, std::string>& stop_to_stop) const
 {
-    stops.push_back(stop);
- 
-    stopname_to_stop[stops.back().stop_name] = &stops.back();
+    size_t hash_fist_stop = hasher_(stop_to_stop.first);
+    size_t hash_second_stop = hasher_(stop_to_stop.second);
+    return hash_fist_stop + hash_second_stop * 17;
 }
  
-void TransportCatalogue::TransportCatalogue::AddBus(std::string bus_name, std::vector<std::string> stops, bool circle)
+void TransportCatalogue::TransportCatalogue::AddStop(const std::string& name, double lat, double lng, const std::vector<std::pair<std::string, int>>& distances)
+{
+    details::Stop temp_stop;
+    temp_stop.stop_name = name;
+    temp_stop.coords.lat = lat;
+    temp_stop.coords.lng = lng;
+    for (auto& dic : distances) {
+        distance_[std::make_pair(name, dic.first)] = dic.second;
+    }
+    stops_.push_back(temp_stop);
+    stopname_to_stop_[stops_.back().stop_name] = &stops_.back();
+}
+ 
+void TransportCatalogue::TransportCatalogue::AddBus(const std::string& bus_name, const std::vector<std::string>& stops, bool circle)
 {
     details::Bus temp_bus;
  
     temp_bus.bus_name = bus_name;
  
     for (const auto& stop : stops){
-        temp_bus.single_marshrut.push_back(stopname_to_stop.at(stop));
+        temp_bus.single_marshrut.push_back(stopname_to_stop_.at(stop));
     }
     if (!circle) {
         for (auto it = stops.rbegin()+1; it != stops.rend(); ++it){
-            temp_bus.single_marshrut.push_back(stopname_to_stop.at(*it));
+            temp_bus.single_marshrut.push_back(stopname_to_stop_.at(*it));
         }
     }
-    buses.push_back(temp_bus);
+    buses_.push_back(temp_bus);
  
-    busname_to_bus[buses.back().bus_name] = &buses.back();
+    busname_to_bus_[buses_.back().bus_name] = &buses_.back();
 }
 
 TransportCatalogue::details::Stop* TransportCatalogue::TransportCatalogue::FindStop(std::string_view find_name) const
 {
-    return stopname_to_stop.at(find_name);
+    return stopname_to_stop_.at(find_name);
 }
  
 TransportCatalogue::details::Bus* TransportCatalogue::TransportCatalogue::FindBus(std::string_view find_name) const
 {
-    if (busname_to_bus.count(find_name)) {
-        return busname_to_bus.at(find_name);
+    if (busname_to_bus_.count(find_name)) {
+        return busname_to_bus_.at(find_name);
     } else {
         return nullptr;
     }
@@ -78,73 +92,64 @@ double TransportCatalogue::TransportCatalogue::DistanceCoord(details::Bus* bus) 
     }
     return distance;
 }
- 
-std::string TransportCatalogue::TransportCatalogue::GetBusInfo(const std::string& find_bus_name) const
+
+TransportCatalogue::details::BusInfo TransportCatalogue::TransportCatalogue::GetBusInfo(const std::string& find_bus_name) const
 {
-    std::string search_stop_info;
+    details::BusInfo bus_info;
     int distance = 0;
+    bus_info.bus_name = find_bus_name;
     details::Bus* find_bus = FindBus(find_bus_name);
     if (find_bus){
+        bus_info.in_cataloge = true;
         std::vector<details::Stop*> stops_vector = find_bus->single_marshrut;
- 
-        for (int i = 0; i < stops_vector.size() - 1; i++){
- 
-            std::unordered_map<std::string, int> m = stops_vector[i]->stops_distances;
-            std::unordered_map<std::string, int> m2 = stops_vector[i + 1]->stops_distances;
- 
-            if (m.count(stops_vector[i + 1]->stop_name)){
-                distance += m[stops_vector[i + 1]->stop_name];
+        for (int i = 0; i < stops_vector.size() - 1; i++) {
+            std::pair<std::string, std::string> stop_to_next_stop = std::make_pair(stops_vector[i]->stop_name, stops_vector[i + 1]->stop_name);
+            std::pair<std::string, std::string> next_stop_to_stop = std::make_pair(stops_vector[i + 1]->stop_name, stops_vector[i]->stop_name);
+            if (distance_.count(stop_to_next_stop)) {
+                distance += distance_.at(stop_to_next_stop);
             }
-            else if (m2.count(stops_vector[i]->stop_name))
+            else if (distance_.count(next_stop_to_stop))
             {
-                distance += m2[stops_vector[i]->stop_name];
-            } else {
+                distance += distance_.at(next_stop_to_stop);
+            }
+            else {
                 distance += 0;
             }
         }
  
-        std::set<details::Stop*> sw(find_bus->single_marshrut.begin(), find_bus->single_marshrut.end());
-        search_stop_info = "Bus "s + find_bus->bus_name + ": "s + std::to_string(find_bus->single_marshrut.size())
-            + " stops on route, "s + std::to_string(sw.size()) + " unique stops, "s + std::to_string(distance)
-            + " route length, "s + std::to_string(1.0 *distance / DistanceCoord(find_bus)) +" curvature"s ;
-        return search_stop_info;
+        std::set<details::Stop*> unique_stops(find_bus->single_marshrut.begin(), find_bus->single_marshrut.end());
+
+        bus_info.stops_on_route = find_bus->single_marshrut.size();
+        bus_info.unique_stops = unique_stops.size();
+        bus_info.route_length = distance;
+        bus_info.curvature = 1.0 * distance / DistanceCoord(find_bus);
+        return bus_info;
     }else{
-        search_stop_info = "Bus "s + std::string(find_bus_name) + ": not found"s;
-        return search_stop_info;
+        return bus_info;
     }
 }
  
-std::string TransportCatalogue::TransportCatalogue::SearchStop(const std::string& find_stop_name) const
+TransportCatalogue::details::StopInfo TransportCatalogue::TransportCatalogue::SearchStop(const std::string& find_stop_name) const
 {
-    std::string search_stop_info;
+    details::StopInfo temp_stop;
+    temp_stop.stop_name = find_stop_name;
     std::vector <std::string> buses_for_stop;
  
-    if (stopname_to_stop.count(find_stop_name)){
-        for (const auto& [bus_name, addr_bus] : busname_to_bus){
+    if (stopname_to_stop_.count(find_stop_name)){
+        temp_stop.in_cataloge = true;
+        for (const auto& [bus_name, addr_bus] : busname_to_bus_){
             auto it = std::find_if(addr_bus->single_marshrut.begin(), addr_bus->single_marshrut.end(),
                 [find_stop_name](const details::Stop* stop){
                     return stop->stop_name == find_stop_name;
                 });
             if (it != addr_bus->single_marshrut.end()) {
-                buses_for_stop.push_back(std::string(bus_name));
+                temp_stop.buses.push_back(std::string(bus_name));
             }
         }
- 
-        if (buses_for_stop.empty()){
-            search_stop_info = "Stop " + find_stop_name + ": no buses";
-            return search_stop_info;
-        }
- 
-        sort(buses_for_stop.begin(), buses_for_stop.end());
- 
-        search_stop_info = "Stop "s + find_stop_name + ": buses"s;
-        for (const auto& bus : buses_for_stop)
-        {
-            search_stop_info += ' ' + bus;
-        }
-        return search_stop_info;
+        if (temp_stop.buses.empty()){ return temp_stop;}
+        sort(temp_stop.buses.begin(), temp_stop.buses.end());
+        return temp_stop;
     } else {
-        search_stop_info = "Stop "s + find_stop_name + ": not found"s;
-        return search_stop_info;
+        return temp_stop;
     }
 }

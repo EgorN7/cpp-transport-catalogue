@@ -16,7 +16,6 @@ namespace TransportCatalogue {
         {
             std::string stop_name;
             Coordinates coords;
-            std::unordered_map <std::string, int> stops_distances;
 
             Stop();
             Stop(std::string name);
@@ -34,6 +33,30 @@ namespace TransportCatalogue {
             bool operator==(const Bus& rhs) const;
             bool operator!=(const Bus& rhs) const;
         };
+
+        struct StopInfo 
+        {
+            std::string stop_name;
+            std::vector<std::string> buses;
+            bool in_cataloge = false;
+        };
+
+        struct BusInfo
+        {
+            std::string bus_name;
+            int stops_on_route = 0;
+            int unique_stops = 0;
+            int route_length = 0;
+            double curvature = 0.0;
+            bool in_cataloge = false;
+        };
+
+        struct StopsHasher {
+            size_t operator() (const std::pair<std::string, std::string>& stop_to_stop) const;
+
+        private:
+            std::hash<std::string> hasher_;
+        };
     }
 
     class TransportCatalogue
@@ -41,27 +64,30 @@ namespace TransportCatalogue {
     public:
 
 
-        void AddStop(details::Stop  stop);
+        void AddStop(const std::string& name, double lat, double lng,const std::vector<std::pair<std::string, int>>& distances);
 
-        void AddBus(std::string bus_name, std::vector<std::string> v, bool circle);
+        void AddBus(const std::string& bus_name, const std::vector<std::string>& stops, bool circle);
 
         details::Stop* FindStop(std::string_view find_name) const;
         details::Bus* FindBus(std::string_view find_name) const;
 
         double DistanceCoord(details::Bus* bus) const;
 
-        std::string SearchStop(const std::string& find_stop_name) const;
-        std::string GetBusInfo(const std::string& find_bus_name) const;
+        details::StopInfo SearchStop(const std::string& find_stop_name) const;
+        details::BusInfo GetBusInfo(const std::string& find_bus_name) const;
 
 
     private:
 
-        std::deque<details::Stop> stops;
+        std::deque<details::Stop> stops_;
 
-        std::deque <details::Bus> buses;
+        std::deque<details::Bus> buses_;
 
-        std::unordered_map<std::string_view, details::Stop*>  stopname_to_stop;
+        std::unordered_map<std::string_view, details::Stop*>  stopname_to_stop_;
 
-        std::unordered_map<std::string_view, details::Bus*>  busname_to_bus;
+        std::unordered_map<std::string_view, details::Bus*>  busname_to_bus_;
+
+        std::unordered_map<std::pair<std::string, std::string>, int, details::StopsHasher>  distance_;
+
     };
 }
