@@ -112,13 +112,13 @@ namespace map_renderer {
         max_lat_ = top_it->lat;
 
         std::optional<double> width_zoom;
-        if (!is_zero(max_lon - min_lon_)) {
+        if (!IsZero(max_lon - min_lon_)) {
             width_zoom = (max_width - 2 * padding)
                 / (max_lon - min_lon_);
         }
 
         std::optional<double> height_zoom;
-        if (!is_zero(max_lat_ - min_lat)) {
+        if (!IsZero(max_lat_ - min_lat)) {
             height_zoom = (max_height - 2 * padding)
                 / (max_lat_ - min_lat);
         }
