@@ -1,44 +1,11 @@
 #include "transport_catalogue.h"
-#include<set>
-#include<iostream>
-#include<algorithm>
+#include <set>
+#include <iostream>
+#include <algorithm>
 #include <sstream>
 
  
- 
-bool TransportCatalogue::details::Stop::operator==(const Stop& rhs) const
-{
-    return stop_name == rhs.stop_name;
-}
-bool TransportCatalogue::details::Stop::operator!=(const Stop& rhs) const
-{
-    return !(stop_name == rhs.stop_name);
-}
- 
-TransportCatalogue::details::Stop::Stop() {}
-
-TransportCatalogue::details::Stop::Stop(std::string name)
-    :stop_name(name) {
-}
- 
-bool TransportCatalogue::details::Bus::operator==(const Bus& rhs) const
-{
-    return bus_name == rhs.bus_name;
-}
-bool TransportCatalogue::details::Bus::operator!=(const Bus& rhs) const
-{
-    return !(bus_name == rhs.bus_name);
-}
-
-
-size_t TransportCatalogue::details::StopsHasher::operator()(const std::pair<Stop*, Stop*>& stop_to_stop) const
-{
-    size_t hash_fist_stop = hasher_(stop_to_stop.first->stop_name);
-    size_t hash_second_stop = hasher_(stop_to_stop.second->stop_name);
-    return hash_fist_stop + hash_second_stop * 17;
-}
- 
-void TransportCatalogue::TransportCatalogue::AddStop(const std::string& name, const Coordinates& coordinates)
+void transport_catalogue::TransportCatalogue::AddStop(const std::string& name, const geo::Coordinates& coordinates)
 {
     details::Stop temp_stop;
     temp_stop.stop_name = name;
@@ -47,12 +14,12 @@ void TransportCatalogue::TransportCatalogue::AddStop(const std::string& name, co
     stopname_to_stop_[stops_.back().stop_name] = &stops_.back();
 }
  
-void TransportCatalogue::TransportCatalogue::AddBus(const std::string& bus_name, const std::vector<std::string>& stops, bool circle)
+void transport_catalogue::TransportCatalogue::AddBus(const std::string& bus_name, const std::vector<std::string>& stops, bool circle)
 {
     details::Bus temp_bus;
  
     temp_bus.bus_name = bus_name;
- 
+    temp_bus.circle = circle;
     for (const auto& stop : stops){
         temp_bus.single_marshrut.push_back(stopname_to_stop_.at(stop));
     }
@@ -66,16 +33,16 @@ void TransportCatalogue::TransportCatalogue::AddBus(const std::string& bus_name,
     busname_to_bus_[buses_.back().bus_name] = &buses_.back();
 }
 
-void TransportCatalogue::TransportCatalogue::AddDistanceBetweenStops(const std::string& first_stop, const std::string& second_stop, int distance_between_stops) {
+void transport_catalogue::TransportCatalogue::AddDistanceBetweenStops(const std::string& first_stop, const std::string& second_stop, int distance_between_stops) {
     distance_[std::make_pair(FindStop(first_stop), FindStop(second_stop))] = distance_between_stops;
 }
 
-TransportCatalogue::details::Stop* TransportCatalogue::TransportCatalogue::FindStop(std::string_view find_name) const
+transport_catalogue::details::Stop* transport_catalogue::TransportCatalogue::FindStop(std::string_view find_name) const
 {
     return stopname_to_stop_.at(find_name);
 }
  
-TransportCatalogue::details::Bus* TransportCatalogue::TransportCatalogue::FindBus(std::string_view find_name) const
+transport_catalogue::details::Bus* transport_catalogue::TransportCatalogue::FindBus(std::string_view find_name) const
 {
     if (busname_to_bus_.count(find_name)) {
         return busname_to_bus_.at(find_name);
@@ -84,7 +51,16 @@ TransportCatalogue::details::Bus* TransportCatalogue::TransportCatalogue::FindBu
     }
 }
 
-int TransportCatalogue::TransportCatalogue::GetDistanceBetweenTwoStops(details::Stop* first_stop, details::Stop* second_stop) const 
+std::unordered_map<std::string_view, transport_catalogue::details::Bus*> transport_catalogue::TransportCatalogue::GetBusnameToBus() const {
+    return busname_to_bus_;
+}
+
+std::unordered_map<std::string_view, transport_catalogue::details::Stop*> transport_catalogue::TransportCatalogue::GetStopnameToStop() const {
+    return stopname_to_stop_;
+}
+
+
+int transport_catalogue::TransportCatalogue::GetDistanceBetweenTwoStops(details::Stop* first_stop, details::Stop* second_stop) const
 {
     int distance = 0;
     std::pair<details::Stop*, details::Stop*> stop_to_next_stop = std::make_pair(first_stop, second_stop);
@@ -102,7 +78,7 @@ int TransportCatalogue::TransportCatalogue::GetDistanceBetweenTwoStops(details::
     return distance;
 }
 
-TransportCatalogue::details::BusRouteDistance TransportCatalogue::TransportCatalogue::GetBusRouteDistance(details::Bus* bus) const
+transport_catalogue::details::BusRouteDistance transport_catalogue::TransportCatalogue::GetBusRouteDistance(details::Bus* bus) const
 {
     int real_distance = 0;
     double coordinates_distance = 0.0;
@@ -114,7 +90,7 @@ TransportCatalogue::details::BusRouteDistance TransportCatalogue::TransportCatal
     return { real_distance , coordinates_distance };
 }
 
-TransportCatalogue::details::BusInfo TransportCatalogue::TransportCatalogue::GetBusInfo(const std::string& find_bus_name) const
+transport_catalogue::details::BusInfo transport_catalogue::TransportCatalogue::GetBusInfo(const std::string& find_bus_name) const
 {
     details::BusInfo bus_info;
     bus_info.bus_name = find_bus_name;
@@ -135,11 +111,10 @@ TransportCatalogue::details::BusInfo TransportCatalogue::TransportCatalogue::Get
     }
 }
  
-TransportCatalogue::details::StopInfo TransportCatalogue::TransportCatalogue::SearchStop(const std::string& find_stop_name) const
+transport_catalogue::details::StopInfo transport_catalogue::TransportCatalogue::SearchStop(const std::string& find_stop_name) const
 {
     details::StopInfo temp_stop;
     temp_stop.stop_name = find_stop_name;
-    std::vector <std::string> buses_for_stop;
  
     if (stopname_to_stop_.count(find_stop_name)){
         temp_stop.in_cataloge = true;
@@ -149,11 +124,9 @@ TransportCatalogue::details::StopInfo TransportCatalogue::TransportCatalogue::Se
                     return stop->stop_name == find_stop_name;
                 });
             if (it != addr_bus->single_marshrut.end()) {
-                temp_stop.buses.push_back(std::string(bus_name));
+                temp_stop.buses.insert(std::string(bus_name));
             }
         }
-        if (temp_stop.buses.empty()){ return temp_stop;}
-        sort(temp_stop.buses.begin(), temp_stop.buses.end());
         return temp_stop;
     } else {
         return temp_stop;

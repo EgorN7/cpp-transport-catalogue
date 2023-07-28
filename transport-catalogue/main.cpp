@@ -1,18 +1,20 @@
-#include<iostream>
+#include "json_reader.h"
+#include "map_renderer.h"
+#include "request_handler.h"
+#include <iostream>
 
-#include "transport_catalogue.h"
-#include "geo.h"
-#include "input_reader.h"
-#include "stat_reader.h"
-//#include "log_duration.h"
+using JSONReader = transport_catalogue::details::json::JSONReader;
 
+int main() {
+    std::vector<transport_catalogue::details::StatRequest> stat_request;
+    map_renderer::RenderSettings render_settings;
+    transport_catalogue::TransportCatalogue catalogue;
 
-int main()
-{
-    TransportCatalogue::TransportCatalogue transport_catalogue;
+    JSONReader json_reader(std::cin);
+    json_reader.Parse(catalogue, stat_request, render_settings);
 
-    InputReader::Parse(transport_catalogue, std::cin);
-    StatReader::Output(transport_catalogue, std::cin, std::cout);
+    map_renderer::MapRenderer renderer (render_settings);
+    request_handler::RequestHandler handler(catalogue, renderer);
 
-    return 0;
+    Print(handler.ExecuteQueries(stat_request), std::cout);
 }
