@@ -27,6 +27,9 @@ namespace transport_catalogue {
         details::StopInfo SearchStop(const std::string& find_stop_name) const;
         details::BusInfo GetBusInfo(const std::string& find_bus_name) const;
 
+        std::vector<geo::Coordinates> GetStopsCoordinates() const;
+        std::vector<std::string_view> GetSortBusesNames() const;
+
     private:
 
         std::deque<details::Stop> stops_;

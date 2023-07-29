@@ -14,25 +14,16 @@ namespace transport_catalogue {
 
             using Dict = std::map<std::string, Node>;
             using Array = std::vector<Node>;
+            using Variable = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
 
             class ParsingError : public std::runtime_error {
             public:
                 using runtime_error::runtime_error;
             };
 
-            class Node {
+            class Node final : private Variable {
             public:
-                using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
-
-                Node() = default;
-                Node(bool value);
-                Node(Array array);
-                Node(Dict map);
-                Node(int value);
-                Node(std::string value);
-                Node(std::nullptr_t);
-                Node(double value);
-
+                using variant::variant;
                 const Array& AsArray() const;
                 const Dict& AsMap() const;
                 int AsInt() const;
@@ -49,10 +40,7 @@ namespace transport_catalogue {
                 bool IsArray() const;
                 bool IsMap() const;
 
-                const Value& GetValue() const { return value_; };
-
-            private:
-                Value value_;
+                const Variable& GetValue() const { return *this; };
             };
 
             inline bool operator==(const Node& lhs, const Node& rhs) {

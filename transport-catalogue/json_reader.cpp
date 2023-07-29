@@ -1,3 +1,4 @@
+#include <sstream>
 #include "json_reader.h"
 
 using Stop = transport_catalogue::details::Stop;
@@ -208,12 +209,7 @@ namespace transport_catalogue {
                 Dict rend_map;
                 Array bus_lab_offset;
                 Array stop_lab_offset;
-                Array arr_color;
                 Array arr_palette;
-                uint8_t red_;
-                uint8_t green_;
-                uint8_t blue_;
-                double opacity_;
 
                 if (node.IsMap()) {
                     rend_map = node.AsMap();
@@ -240,59 +236,14 @@ namespace transport_catalogue {
                                 stop_lab_offset[1].AsDouble());
                         }
 
-                        if (rend_map.at("underlayer_color").IsString()) {
-                            render_settings.underlayer_color_ = svg::Color(rend_map.at("underlayer_color").AsString());
-                        }
-                        else if (rend_map.at("underlayer_color").IsArray()) {
-                            arr_color = rend_map.at("underlayer_color").AsArray();
-                            red_ = arr_color[0].AsInt();
-                            green_ = arr_color[1].AsInt();
-                            blue_ = arr_color[2].AsInt();
-
-                            if (arr_color.size() == 4) {
-                                opacity_ = arr_color[3].AsDouble();
-                                render_settings.underlayer_color_ = svg::Color(svg::Rgba(red_,
-                                    green_,
-                                    blue_,
-                                    opacity_));
-                            }
-                            else if (arr_color.size() == 3) {
-                                render_settings.underlayer_color_ = svg::Color(svg::Rgb(red_,
-                                    green_,
-                                    blue_));
-                            }
-
-                        }
-
+                        render_settings.underlayer_color_ = ParseNodeArrayColor(rend_map.at("underlayer_color"));
                         render_settings.underlayer_width_ = rend_map.at("underlayer_width").AsDouble();
 
                         if (rend_map.at("color_palette").IsArray()) {
                             arr_palette = rend_map.at("color_palette").AsArray();
 
                             for (Node color_palette : arr_palette) {
-
-                                if (color_palette.IsString()) {
-                                    render_settings.color_palette_.push_back(svg::Color(color_palette.AsString()));
-                                }
-                                else if (color_palette.IsArray()) {
-                                    arr_color = color_palette.AsArray();
-                                    red_ = arr_color[0].AsInt();
-                                    green_ = arr_color[1].AsInt();
-                                    blue_ = arr_color[2].AsInt();
-
-                                    if (arr_color.size() == 4) {
-                                        opacity_ = arr_color[3].AsDouble();
-                                        render_settings.color_palette_.push_back(svg::Color(svg::Rgba(red_,
-                                            green_,
-                                            blue_,
-                                            opacity_)));
-                                    }
-                                    else if (arr_color.size() == 3) {
-                                        render_settings.color_palette_.push_back(svg::Color(svg::Rgb(red_,
-                                            green_,
-                                            blue_)));
-                                    }
-                                }
+                                render_settings.color_palette_.push_back(ParseNodeArrayColor(color_palette));
                             }
                         }
                     }
@@ -306,9 +257,113 @@ namespace transport_catalogue {
                 }
             }
 
+            svg::Color JSONReader::ParseNodeArrayColor(const Node& node) {
+                double opacity_;
+
+                if (node.IsString()) {
+                    return svg::Color(node.AsString());
+                }
+                else if (node.IsArray()) {
+                    Array arr_color = node.AsArray();
+                    uint8_t red_ = arr_color[0].AsInt();
+                    uint8_t green_ = arr_color[1].AsInt();
+                    uint8_t blue_ = arr_color[2].AsInt();
+
+                    if (arr_color.size() == 4) {
+                        opacity_ = arr_color[3].AsDouble();
+                        return svg::Color(svg::Rgba(red_,
+                            green_,
+                            blue_,
+                            opacity_));
+                    }
+                    else if (arr_color.size() == 3) {
+                        return svg::Color(svg::Rgb(red_,
+                            green_,
+                            blue_));
+                    }
+                    return {};
+                }
+                return {};
+            }
+
             const Document& JSONReader::GetInDocument() const {
                 return in_document_;
             }
+
+            Document JSONReader::ExecuteQueries(const request_handler::RequestHandler& handler,std::vector<transport_catalogue::details::StatRequest>& stat_requests) {
+                std::vector<Node> result_request;
+
+                for (transport_catalogue::details::StatRequest& req : stat_requests) {
+
+                    if (req.type == "Stop") {
+                        result_request.push_back(ExecuteMakeNodeStop(req.id, handler.GetStopInfo(req.name)));
+
+                    }
+                    else if (req.type == "Bus") {
+                        result_request.push_back(ExecuteMakeNodeBus(req.id, handler.GetBusStat(req.name)));
+                    }
+                    else if (req.type == "Map") {
+                        result_request.push_back(ExecuteMakeNodeMap(req.id, handler.RenderMap()));
+                    }
+                }
+                return Document{ Node{result_request} };
+            }
+
+            Node JSONReader::ExecuteMakeNodeStop(int id_request, const transport_catalogue::details::StopInfo& stop_info) {
+                Dict result;
+                Array buses;
+                std::string str_not_found = "not found";
+
+                if (stop_info.in_cataloge) {
+                    result.emplace("request_id", Node{ id_request });
+
+                    for (std::string bus_name : stop_info.buses) {
+                        buses.push_back(Node{ bus_name });
+                    }
+
+                    result.emplace("buses", Node{ buses });
+
+                }
+                else {
+                    result.emplace("request_id", Node{ id_request });
+                    result.emplace("error_message", Node{ str_not_found });
+                }
+
+                return Node{ result };
+            }
+
+            Node JSONReader::ExecuteMakeNodeBus(int id_request, const transport_catalogue::details::BusInfo& bus_info) {
+                Dict result;
+                std::string str_not_found = "not found";
+
+                if (bus_info.in_cataloge) {
+                    result.emplace("request_id", Node{ id_request });
+                    result.emplace("curvature", Node{ bus_info.curvature });
+                    result.emplace("route_length", Node{ bus_info.route_length });
+                    result.emplace("stop_count", Node{ bus_info.stops_on_route });
+                    result.emplace("unique_stop_count", Node{ bus_info.unique_stops });
+                }
+                else {
+                    result.emplace("request_id", Node{ id_request });
+                    result.emplace("error_message", Node{ str_not_found });
+                }
+
+                return Node{ result };
+            }
+
+            Node JSONReader::ExecuteMakeNodeMap(int id_request,const svg::Document& map) {
+                transport_catalogue::details::json::Dict result;
+                std::ostringstream map_stream;
+                std::string map_str;
+                map.Render(map_stream);
+                map_str = map_stream.str();
+
+                result.emplace("request_id", Node(id_request));
+                result.emplace("map", Node(map_str));
+
+                return Node(result);
+            }
+
 
         }
     }

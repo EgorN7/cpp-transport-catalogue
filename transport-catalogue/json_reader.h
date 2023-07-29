@@ -17,6 +17,7 @@ namespace transport_catalogue {
 
 
                 void Parse(TransportCatalogue& catalogue, std::vector<details::StatRequest>& stat_request, map_renderer::RenderSettings& render_settings);
+                Document ExecuteQueries(const request_handler::RequestHandler& handler, std::vector<details::StatRequest>& stat_requests);
                 const Document& GetInDocument() const;
 
             private:
@@ -30,6 +31,11 @@ namespace transport_catalogue {
                 void ParseNodeStop(TransportCatalogue& catalogue, Node& node);
                 void ParseNodeDistances(TransportCatalogue& catalogue, Node& node);
                 void ParseNodeBus(TransportCatalogue& catalogue, Node& node);
+                svg::Color ParseNodeArrayColor(const Node& node);
+
+                Node ExecuteMakeNodeStop(int id_request, const transport_catalogue::details::StopInfo& stop_info);
+                Node ExecuteMakeNodeBus(int id_request, const transport_catalogue::details::BusInfo& bus_info);
+                Node ExecuteMakeNodeMap(int id_request,const svg::Document& map);
             };
 
         }

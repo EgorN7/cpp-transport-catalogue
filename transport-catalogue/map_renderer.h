@@ -7,6 +7,7 @@
 #include "domain.h"
 #include "geo.h"
 #include "svg.h"
+#include "transport_catalogue.h"
 
 namespace map_renderer {
 
@@ -53,15 +54,11 @@ namespace map_renderer {
 
     public:
         MapRenderer(RenderSettings& render_settings);
-
-        void InitSphereProjector(std::vector<geo::Coordinates> points);
         int GetPaletteSize() const;
-        void GetStreamMap(std::ostream& stream_);
+        void FillMap(const transport_catalogue::TransportCatalogue& catalogue);
+        const svg::Document& GetRanderMap() const;
 
-        void AddLine(std::vector<std::pair<transport_catalogue::details::Bus*, int>>& buses_palette);
-        void AddBusesName(std::vector<std::pair<transport_catalogue::details::Bus*, int>>& buses_palette);
-        void AddStopsCircle(std::vector<transport_catalogue::details::Stop*>& stops_name);
-        void AddStopsName(std::vector<transport_catalogue::details::Stop*>& stops_name);
+
 
     private:
         SphereProjector sphere_projector_;
@@ -71,6 +68,14 @@ namespace map_renderer {
         SphereProjector GetSphereProjector(const std::vector<geo::Coordinates>& points) const;
         RenderSettings GetRenderSettings() const;
         svg::Color GetColor(int line_number) const;
+
+        void InitSphereProjector(std::vector<geo::Coordinates> points);
+
+        void AddLine(std::vector<std::pair<transport_catalogue::details::Bus*, int>>& buses_palette);
+        void AddBusesName(std::vector<std::pair<transport_catalogue::details::Bus*, int>>& buses_palette);
+        void AddStopsCircle(std::vector<transport_catalogue::details::Stop*>& stops_name);
+        void AddStopsName(std::vector<transport_catalogue::details::Stop*>& stops_name);
+
         void SetLineProperties(svg::Polyline& polyline, int line_number) const;
         void SetRouteTextCommonProperties(svg::Text& text, const std::string& name, svg::Point position) const;
         void SetRouteTextAdditionalProperties(svg::Text& text, const std::string& name, svg::Point position) const;

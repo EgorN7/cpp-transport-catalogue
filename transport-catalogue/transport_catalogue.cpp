@@ -132,3 +132,39 @@ transport_catalogue::details::StopInfo transport_catalogue::TransportCatalogue::
         return temp_stop;
     }
 }
+
+std::vector<geo::Coordinates> transport_catalogue::TransportCatalogue::GetStopsCoordinates() const {
+
+    std::vector<geo::Coordinates> stops_coordinates;
+    auto buses = GetBusnameToBus();
+
+    for (auto& [busname, bus] : buses) {
+        for (auto& stop : bus->single_marshrut) {
+            geo::Coordinates coordinates;
+            coordinates.lat = stop->coords.lat;
+            coordinates.lng = stop->coords.lng;
+
+            stops_coordinates.push_back(coordinates);
+        }
+    }
+    return stops_coordinates;
+}
+
+std::vector<std::string_view> transport_catalogue::TransportCatalogue::GetSortBusesNames() const {
+    std::vector<std::string_view> buses_names;
+
+    auto buses = GetBusnameToBus();
+    if (buses.size() > 0) {
+
+        for (auto& [busname, bus] : buses) {
+            buses_names.push_back(busname);
+        }
+
+        std::sort(buses_names.begin(), buses_names.end());
+
+        return buses_names;
+    }
+    else {
+        return {};
+    }
+}

@@ -14,7 +14,9 @@ int main() {
     json_reader.Parse(catalogue, stat_request, render_settings);
 
     map_renderer::MapRenderer renderer (render_settings);
+    renderer.FillMap(catalogue);
     request_handler::RequestHandler handler(catalogue, renderer);
+    
 
-    Print(handler.ExecuteQueries(stat_request), std::cout);
+    Print(json_reader.ExecuteQueries(handler, stat_request), std::cout);
 }

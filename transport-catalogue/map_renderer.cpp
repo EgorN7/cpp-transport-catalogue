@@ -21,6 +21,68 @@ namespace map_renderer {
             render_settings_.padding_);
     }
 
+    void MapRenderer::FillMap(const transport_catalogue::TransportCatalogue& catalogue) {
+        InitSphereProjector(catalogue.GetStopsCoordinates());
+        std::vector<std::pair<transport_catalogue::details::Bus*, int>> buses_palette;
+        std::vector<transport_catalogue::details::Stop*> stops_sort;
+        int palette_size = 0;
+        int palette_index = 0;
+
+        palette_size = GetPaletteSize();
+        if (palette_size == 0) {
+            std::cout << "color palette is empty";
+            return;
+        }
+
+        auto buses = catalogue.GetSortBusesNames();
+
+        if (buses.size() > 0) {
+
+            for (auto& bus_name : buses) {
+                auto busptr = catalogue.FindBus(std::string(bus_name));
+                if (busptr->single_marshrut.size() > 0) {
+                    buses_palette.push_back(std::make_pair(busptr, palette_index));
+                    palette_index++;
+
+                    if (palette_index == palette_size) {
+                        palette_index = 0;
+                    }
+                }
+            }
+
+            if (buses_palette.size() > 0) {
+                AddLine(buses_palette);
+                AddBusesName(buses_palette);
+            }
+        }
+
+        auto stops = catalogue.GetStopnameToStop();
+        if (stops.size() > 0) {
+            std::vector<std::string_view> stops_name;
+
+            for (auto& [stop_name, stop] : stops) {
+
+                if (catalogue.SearchStop(std::string(stop_name)).buses.size() > 0) {
+                    stops_name.push_back(stop_name);
+                }
+            }
+
+            std::sort(stops_name.begin(), stops_name.end());
+
+            for (std::string_view stop_name : stops_name) {
+                transport_catalogue::details::Stop* stop = catalogue.FindStop(stop_name);
+                if (stop) {
+                    stops_sort.push_back(stop);
+                }
+            }
+
+            if (stops_sort.size() > 0) {
+                AddStopsCircle(stops_sort);
+                AddStopsName(stops_sort);
+            }
+        }
+    }
+
     void MapRenderer::InitSphereProjector(std::vector<geo::Coordinates> points) {
         sphere_projector_ = SphereProjector(points.begin(),
             points.end(),
@@ -267,8 +329,7 @@ namespace map_renderer {
         }
     }
 
-    void MapRenderer::GetStreamMap(std::ostream& stream_) {
-        map_svg_.Render(stream_);
-    }
-
+    const svg::Document& MapRenderer::GetRanderMap() const {
+        return map_svg_;
+    }   
 }

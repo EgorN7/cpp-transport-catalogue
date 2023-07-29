@@ -230,39 +230,12 @@ namespace transport_catalogue {
                 }
             }  // namespace
 
-            Node::Node(Array array) :
-                value_(std::move(array)) {
-            }
-
-            Node::Node(std::nullptr_t) :
-                Node() {}
-
-            Node::Node(bool value)
-                : value_(value) {
-            }
-
-            Node::Node(Dict map)
-                : value_(move(map)) {
-            }
-
-            Node::Node(int value)
-                : value_(value) {
-            }
-
-            Node::Node(string value)
-                : value_(move(value)) {
-            }
-
-            Node::Node(double value)
-                : value_(value) {
-            }
-
             const Array& Node::AsArray() const {
                 using namespace std::literals;
                 if (!IsArray()) {
                     throw std::logic_error("Error: not array"s);
                 }
-                return std::get<Array>(value_);
+                return std::get<Array>(GetValue());
             }
 
             const Dict& Node::AsMap() const {
@@ -270,7 +243,7 @@ namespace transport_catalogue {
                 if (!IsMap()) {
                     throw std::logic_error("Error: not dict"s);
                 }
-                return std::get<Dict>(value_);
+                return std::get<Dict>(GetValue());
             }
 
             const string& Node::AsString() const {
@@ -278,7 +251,7 @@ namespace transport_catalogue {
                 if (!IsString()) {
                     throw std::logic_error("Error: not string"s);
                 }
-                return std::get<std::string>(value_);
+                return std::get<std::string>(GetValue());
             }
 
             int Node::AsInt() const {
@@ -286,7 +259,7 @@ namespace transport_catalogue {
                 if (!IsInt()) {
                     throw std::logic_error("Error: not int"s);
                 }
-                return std::get<int>(value_);
+                return std::get<int>(GetValue());
             }
 
             double Node::AsDouble() const {
@@ -295,7 +268,7 @@ namespace transport_catalogue {
                     throw std::logic_error("Error: not double"s);
                 }
                 if (IsPureDouble()) {
-                    return std::get<double>(value_);
+                    return std::get<double>(GetValue());
                 }
                 else {
                     return AsInt();
@@ -307,15 +280,15 @@ namespace transport_catalogue {
                 if (!IsBool()) {
                     throw std::logic_error("Error: not bool"s);
                 }
-                return std::get<bool>(value_);
+                return std::get<bool>(GetValue());
             }
 
             bool Node::IsNull() const {
-                return std::holds_alternative<std::nullptr_t>(value_);
+                return std::holds_alternative<std::nullptr_t>(GetValue());
             }
 
             bool Node::IsInt() const {
-                return std::holds_alternative<int>(value_);
+                return std::holds_alternative<int>(GetValue());
             }
 
             bool Node::IsDouble() const {
@@ -323,23 +296,23 @@ namespace transport_catalogue {
             }
 
             bool Node::IsPureDouble() const {
-                return std::holds_alternative<double>(value_);
+                return std::holds_alternative<double>(GetValue());
             }
 
             bool Node::IsBool() const {
-                return std::holds_alternative<bool>(value_);
+                return std::holds_alternative<bool>(GetValue());
             }
 
             bool Node::IsString() const {
-                return std::holds_alternative<std::string>(value_);
+                return std::holds_alternative<std::string>(GetValue());
             }
 
             bool Node::IsArray() const {
-                return std::holds_alternative<Array>(value_);
+                return std::holds_alternative<Array>(GetValue());
             }
 
             bool Node::IsMap() const {
-                return std::holds_alternative<Dict>(value_);
+                return std::holds_alternative<Dict>(GetValue());
             }
 
 
