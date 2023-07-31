@@ -82,7 +82,7 @@ transport_catalogue::details::BusRouteDistance transport_catalogue::TransportCat
 {
     int real_distance = 0;
     double coordinates_distance = 0.0;
-    for (int i = 0; i < bus->single_marshrut.size() - 1; i++) {
+    for (size_t i = 0; i <( bus->single_marshrut.size() - 1); i++) {
         real_distance += GetDistanceBetweenTwoStops(bus->single_marshrut[i], bus->single_marshrut[i + 1]);
         coordinates_distance += ComputeDistance(bus->single_marshrut[i]->coords,
             bus->single_marshrut[i + 1]->coords);

@@ -310,61 +310,66 @@ namespace transport_catalogue {
             }
 
             Node JSONReader::ExecuteMakeNodeStop(int id_request, const transport_catalogue::details::StopInfo& stop_info) {
-                Dict result;
                 Array buses;
-                std::string str_not_found = "not found";
+                Builder builder;
 
                 if (stop_info.in_cataloge) {
-                    result.emplace("request_id", Node{ id_request });
+                    builder
+                        .StartDict()
+                            .Key("request_id").Value(id_request)
+                            .Key("buses").StartArray();
 
                     for (std::string bus_name : stop_info.buses) {
-                        buses.push_back(Node{ bus_name });
+                        builder.Value(bus_name);
                     }
 
-                    result.emplace("buses", Node{ buses });
-
+                    builder.EndArray().EndDict();
                 }
                 else {
-                    result.emplace("request_id", Node{ id_request });
-                    result.emplace("error_message", Node{ str_not_found });
+                    builder
+                        .StartDict()
+                            .Key("request_id").Value(id_request)
+                            .Key("error_message").Value("not found")
+                        .EndDict();
                 }
-
-                return Node{ result };
+                return builder.Build();
             }
 
             Node JSONReader::ExecuteMakeNodeBus(int id_request, const transport_catalogue::details::BusInfo& bus_info) {
-                Dict result;
-                std::string str_not_found = "not found";
-
                 if (bus_info.in_cataloge) {
-                    result.emplace("request_id", Node{ id_request });
-                    result.emplace("curvature", Node{ bus_info.curvature });
-                    result.emplace("route_length", Node{ bus_info.route_length });
-                    result.emplace("stop_count", Node{ bus_info.stops_on_route });
-                    result.emplace("unique_stop_count", Node{ bus_info.unique_stops });
+                    return Builder{}
+                            .StartDict()
+                                .Key("request_id").Value(id_request)
+                                .Key("curvature").Value(bus_info.curvature)
+                                .Key("route_length").Value(bus_info.route_length)
+                                .Key("stop_count").Value(bus_info.stops_on_route)
+                                .Key("unique_stop_count").Value(bus_info.unique_stops)
+                            .EndDict()
+                        .Build()
+                        ;
                 }
                 else {
-                    result.emplace("request_id", Node{ id_request });
-                    result.emplace("error_message", Node{ str_not_found });
+                    return Builder{}
+                            .StartDict()
+                                .Key("request_id").Value(id_request)
+                                .Key("error_message").Value("not found")
+                            .EndDict()
+                        .Build();
                 }
-
-                return Node{ result };
             }
 
             Node JSONReader::ExecuteMakeNodeMap(int id_request,const svg::Document& map) {
-                transport_catalogue::details::json::Dict result;
                 std::ostringstream map_stream;
                 std::string map_str;
                 map.Render(map_stream);
                 map_str = map_stream.str();
-
-                result.emplace("request_id", Node(id_request));
-                result.emplace("map", Node(map_str));
-
-                return Node(result);
+                return Builder{}
+                        .StartDict()
+                            .Key("request_id").Value(id_request)
+                            .Key("map").Value(map_str)
+                        .EndDict()
+                    .Build();
             }
-
-
         }
     }
 }

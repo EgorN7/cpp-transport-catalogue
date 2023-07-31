@@ -24,6 +24,8 @@ namespace transport_catalogue {
             class Node final : private Variable {
             public:
                 using variant::variant;
+                using Value = variant;
+
                 const Array& AsArray() const;
                 const Dict& AsMap() const;
                 int AsInt() const;
