@@ -7,8 +7,10 @@ using namespace transport_catalogue::details::json;
 
 namespace request_handler {
 
-	RequestHandler::RequestHandler(const transport_catalogue::TransportCatalogue& catalogue, const map_renderer::MapRenderer& renderer )
-		: catalogue_(catalogue), renderer_(renderer) {
+	RequestHandler::RequestHandler(const transport_catalogue::TransportCatalogue& catalogue
+        , const map_renderer::MapRenderer& renderer
+        , const transport_router::TransportRouter& router)
+		: catalogue_(catalogue), renderer_(renderer), router_(router){
 	}
 
     transport_catalogue::details::BusInfo RequestHandler::GetBusStat(const std::string& bus_name) const {
@@ -31,5 +33,9 @@ namespace request_handler {
     
     std::vector<std::string_view> RequestHandler::GetSortBusesNames() const {
         return catalogue_.GetSortBusesNames();
+    }
+
+    std::optional<transport_router::details::RouteInfo> RequestHandler::GetRouteInfo(const std::string& from_stop, const std::string& to_stop) const {
+        return router_.GetRouteInfo(from_stop, to_stop);
     }
 }

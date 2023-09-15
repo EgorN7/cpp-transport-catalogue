@@ -3,8 +3,10 @@
 #include<vector>
 #include<set>
 #include<iostream>
+#include<variant>
 
 #include "geo.h"
+#include "graph.h"
 
 namespace transport_catalogue {
 
@@ -55,17 +57,21 @@ namespace transport_catalogue {
             bool in_cataloge = false;
         };
 
-        struct StopsHasher {
+        struct StopsHasher 
+        {
             size_t operator() (const std::pair<Stop*, Stop*>& stop_to_stop) const;
 
         private:
             std::hash<std::string> hasher_;
         };
 
-        struct StatRequest {
+        struct StatRequest 
+        {
             int id;
             std::string type;
             std::string name;
+            std::string from_stop;
+            std::string to_stop;
         };
 
         void PrintStopInfo(const StopInfo& stop, std::ostream& out);
@@ -73,6 +79,39 @@ namespace transport_catalogue {
     }
 }
 
+namespace transport_router {
+
+    namespace details {
+
+        struct RoutingSettings
+        {
+            double bus_wait_time_ = 0;
+            double bus_velocity_ = 0;
+        };
+
+        struct BusEdge {
+            std::string_view bus_name;
+            size_t span_count = 0;
+            double time = 0;
+        };
+
+        struct StopEdge {
+            std::string_view name;
+            double time = 0;
+        };
+
+        struct RouteInfo {
+            double total_time = 0.;
+            std::vector<std::variant<StopEdge, BusEdge>> edges;
+        };
+
+        struct RouterByStop {
+            graph::VertexId bus_wait_start;
+            graph::VertexId bus_wait_end;
+        };
+    }
+
+}
 
 
 std::ostream& operator<< (std::ostream& out, const transport_catalogue::details::StopInfo& stop_info);

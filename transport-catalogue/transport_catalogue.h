@@ -30,6 +30,8 @@ namespace transport_catalogue {
         std::vector<geo::Coordinates> GetStopsCoordinates() const;
         std::vector<std::string_view> GetSortBusesNames() const;
 
+        int GetDistanceBetweenTwoStops(details::Stop* first_stop, details::Stop* second_stop) const;
+
     private:
 
         std::deque<details::Stop> stops_;
@@ -42,7 +44,7 @@ namespace transport_catalogue {
 
         std::unordered_map<std::pair<details::Stop*, details::Stop*>, int, details::StopsHasher>  distance_;
 
-        int GetDistanceBetweenTwoStops(details::Stop* first_stop, details::Stop* second_stop) const;
+        
         details::BusRouteDistance GetBusRouteDistance(details::Bus* bus) const;
     };
 }
