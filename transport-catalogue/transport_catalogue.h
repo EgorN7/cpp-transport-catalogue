@@ -16,7 +16,9 @@ namespace transport_catalogue {
 
 
         void AddStop(const std::string& name, const geo::Coordinates& coordinates);
+        void AddStop(details::Stop&& stop);
         void AddBus(const std::string& bus_name, const std::vector<std::string>& stops, bool circle);
+        void AddBus(details::Bus&& bus);
         void AddDistanceBetweenStops(const std::string& first_stop, const std::string& second_stop, int distance_between_stops);
 
         details::Stop* FindStop(std::string_view find_name) const;
@@ -31,6 +33,10 @@ namespace transport_catalogue {
         std::vector<std::string_view> GetSortBusesNames() const;
 
         int GetDistanceBetweenTwoStops(details::Stop* first_stop, details::Stop* second_stop) const;
+
+        std::deque<details::Stop> GetStops() const;
+        std::deque<details::Bus> GetBuses() const;
+        std::unordered_map<std::pair<details::Stop*, details::Stop*>, int, details::StopsHasher> GetDistance() const;
 
     private:
 

@@ -14,18 +14,23 @@ namespace transport_catalogue {
                 JSONReader(std::istream& input);
 
 
-                void Parse(TransportCatalogue& catalogue, std::vector<details::StatRequest>& stat_request, map_renderer::RenderSettings& render_settings, transport_router::details::RoutingSettings& routing_settings);
+                void ParseMakeBase(TransportCatalogue& catalogue, map_renderer::RenderSettings& render_settings, 
+                    transport_router::details::RoutingSettings& routing_settings, serialization::SerializationSettings& serialization_settings);
+                void ParseRequest(std::vector<details::StatRequest>& stat_request, serialization::SerializationSettings& serialization_settings);
                 Document ExecuteQueries(const request_handler::RequestHandler& handler, std::vector<details::StatRequest>& stat_requests);
                 const Document& GetInDocument() const;
 
             private:
                 Document in_document_;
 
-                void ParseNode(const Node& root, TransportCatalogue& catalogue, std::vector<details::StatRequest>& stat_request, map_renderer::RenderSettings& render_settings, transport_router::details::RoutingSettings& routing_settings);
+                void ParseMakeBaseNode(const Node& root, TransportCatalogue& catalogue, map_renderer::RenderSettings& render_settings,
+                    transport_router::details::RoutingSettings& routing_settings, serialization::SerializationSettings& serialization_settings);
+                void ParseRequestNode(const Node& root, std::vector<details::StatRequest>& stat_request, serialization::SerializationSettings& serialization_settings);
                 void ParseNodeBase(const Node& root, TransportCatalogue& catalogue);
                 void ParseNodeStat(const Node& node, std::vector<details::StatRequest>& stat_request);
                 void ParseNodeRender(const Node& node, map_renderer::RenderSettings& render_settings);
                 void ParseNodeRouteSetting(const Node& node, transport_router::details::RoutingSettings& routing_settings);
+                void ParseNodeSerialization(const Node& node, serialization::SerializationSettings& serialization_set);
 
                 void ParseNodeStop(TransportCatalogue& catalogue, Node& node);
                 void ParseNodeDistances(TransportCatalogue& catalogue, Node& node);

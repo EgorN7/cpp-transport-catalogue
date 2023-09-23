@@ -13,6 +13,12 @@ void transport_catalogue::TransportCatalogue::AddStop(const std::string& name, c
     stops_.push_back(temp_stop);
     stopname_to_stop_[stops_.back().stop_name] = &stops_.back();
 }
+
+void transport_catalogue::TransportCatalogue::AddStop(details::Stop&& stop)
+{
+    stops_.push_back(std::move(stop));
+    stopname_to_stop_[stops_.back().stop_name] = &stops_.back();
+}
  
 void transport_catalogue::TransportCatalogue::AddBus(const std::string& bus_name, const std::vector<std::string>& stops, bool circle)
 {
@@ -30,6 +36,12 @@ void transport_catalogue::TransportCatalogue::AddBus(const std::string& bus_name
     }
     buses_.push_back(temp_bus);
  
+    busname_to_bus_[buses_.back().bus_name] = &buses_.back();
+}
+
+void transport_catalogue::TransportCatalogue::AddBus(details::Bus&& bus) 
+{
+    buses_.push_back(std::move(bus));
     busname_to_bus_[buses_.back().bus_name] = &buses_.back();
 }
 
@@ -167,4 +179,14 @@ std::vector<std::string_view> transport_catalogue::TransportCatalogue::GetSortBu
     else {
         return {};
     }
+}
+
+std::deque<transport_catalogue::details::Stop> transport_catalogue::TransportCatalogue::GetStops() const {
+    return stops_;
+}
+std::deque<transport_catalogue::details::Bus> transport_catalogue::TransportCatalogue::GetBuses() const {
+    return buses_;
+}
+std::unordered_map<std::pair<transport_catalogue::details::Stop*, transport_catalogue::details::Stop*>, int, transport_catalogue::details::StopsHasher> transport_catalogue::TransportCatalogue::GetDistance() const {
+    return distance_;
 }

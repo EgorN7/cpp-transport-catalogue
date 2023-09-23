@@ -22,6 +22,7 @@ private:
 public:
     explicit Router(const Graph& graph);
 
+
     struct RouteInfo {
         Weight weight;
         std::vector<EdgeId> edges;
@@ -29,11 +30,13 @@ public:
 
     std::optional<RouteInfo> BuildRoute(VertexId from, VertexId to) const;
 
-private:
     struct RouteInternalData {
         Weight weight;
         std::optional<EdgeId> prev_edge;
     };
+
+private:
+
     using RoutesInternalData = std::vector<std::vector<std::optional<RouteInternalData>>>;
 
     void InitializeRoutesInternalData(const Graph& graph) {

@@ -10,6 +10,19 @@ namespace transport_router {
         router_ = std::make_unique<Router<double>>(*graph_);
 	}
 
+    TransportRouter::TransportRouter(const transport_catalogue::TransportCatalogue& catalogue
+        , details::RoutingSettings& routing_settings
+        , std::unordered_map<transport_catalogue::details::Stop*, details::RouterByStop>& stop_to_router
+        , std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>>& edge_id_to_edge
+        , std::unique_ptr<DirectedWeightedGraph<double>>&& graph)
+        : catalogue_(catalogue), routing_settings_(routing_settings)
+        , stop_to_router_(std::move(stop_to_router))
+        , edge_id_to_edge_(std::move(edge_id_to_edge))
+        , graph_(std::move(graph))
+    {
+        router_ = std::make_unique<Router<double>>(*graph_);
+    }
+
     void TransportRouter::SetGraph() {
 
         const auto stops_ptr = GetStopsPtr();
@@ -120,4 +133,21 @@ namespace transport_router {
             return std::nullopt;
         }
     }
+
+    const details::RoutingSettings& TransportRouter::GetRoutingSettings() const {
+        return routing_settings_;
+    }
+
+    const std::unordered_map<transport_catalogue::details::Stop*, details::RouterByStop>& TransportRouter::GetStopToRouter() const {
+        return stop_to_router_;
+    }
+
+    const std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>>& TransportRouter::GetEdgeIdToEdge() const {
+        return edge_id_to_edge_;
+    }
+
+    const DirectedWeightedGraph<double>& TransportRouter::GetGraph() const {
+        return *graph_;
+    }
+
 }

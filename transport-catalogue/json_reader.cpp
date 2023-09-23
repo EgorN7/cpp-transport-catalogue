@@ -12,11 +12,17 @@ namespace transport_catalogue {
             JSONReader::JSONReader(Document doc) : in_document_(std::move(doc)) {}
             JSONReader::JSONReader(std::istream& input) : in_document_(json::Load(input)) {}
 
-            void JSONReader::Parse(transport_catalogue::TransportCatalogue& catalogue, std::vector<details::StatRequest>& stat_request, map_renderer::RenderSettings& render_settings, transport_router::details::RoutingSettings& routing_settings) {
-                ParseNode(in_document_.GetRoot(), catalogue, stat_request, render_settings, routing_settings);
+            void JSONReader::ParseMakeBase(transport_catalogue::TransportCatalogue& catalogue, map_renderer::RenderSettings& render_settings,
+                transport_router::details::RoutingSettings& routing_settings, serialization::SerializationSettings& serialization_settings) {
+                ParseMakeBaseNode(in_document_.GetRoot(), catalogue, render_settings, routing_settings, serialization_settings);
             }
 
-            void JSONReader::ParseNode(const Node& root, TransportCatalogue& catalogue, std::vector<details::StatRequest>& stat_request, map_renderer::RenderSettings& render_settings, transport_router::details::RoutingSettings& routing_settings) {
+            void JSONReader::ParseRequest(std::vector<details::StatRequest>& stat_request, serialization::SerializationSettings& serialization_settings) {
+                ParseRequestNode(in_document_.GetRoot(), stat_request, serialization_settings);
+            }
+
+            void JSONReader::ParseMakeBaseNode(const Node& root, TransportCatalogue& catalogue, map_renderer::RenderSettings& render_settings,
+                transport_router::details::RoutingSettings& routing_settings, serialization::SerializationSettings& serialization_settings) {
                 Dict root_dict;
 
                 if (root.IsMap()) {
@@ -40,19 +46,45 @@ namespace transport_catalogue {
                     catch (...) {
                         std::cout << "routing_settings is empty";
                     }
+
+                    try {
+                        ParseNodeSerialization(root_dict.at("serialization_settings"), serialization_settings);
+                    }
+                    catch (...) {
+                        std::cout << "serialization settings is empty";
+                    }
+                }
+                else {
+                    std::cout << "Error: root is not map";
+                }
+            }
+
+            void JSONReader::ParseRequestNode(const Node& root, std::vector<details::StatRequest>& stat_request, serialization::SerializationSettings& serialization_settings) {
+                Dict root_dict;
+
+                if (root.IsMap()) {
+                    root_dict = root.AsMap();
+
                     try {
                         ParseNodeStat(root_dict.at("stat_requests"), stat_request);
                     }
                     catch (...) {
                         std::cout << "stat_requests is empty";
                     }
-
-
+                    try {
+                        ParseNodeSerialization(root_dict.at("serialization_settings"), serialization_settings);
+                    }
+                    catch (...) {
+                        std::cout << "serialization settings is empty";
+                    }
                 }
                 else {
                     std::cout << "Error: root is not map";
                 }
             }
+
+
+
 
             void JSONReader::ParseNodeBase(const Node& root, TransportCatalogue& catalogue) {
                 Array base_requests;
@@ -288,6 +320,27 @@ namespace transport_catalogue {
                 }
                 else {
                     std::cout << "routing_settings is not map";
+                }
+            }
+
+            void JSONReader::ParseNodeSerialization(const Node& node, serialization::SerializationSettings& serialization_set) {
+
+                Dict serialization;
+
+                if (node.IsMap()) {
+                    serialization = node.AsMap();
+
+                    try {
+                        serialization_set.file_name = serialization.at("file").AsString();
+
+                    }
+                    catch (...) {
+                        std::cout << "unable to parse serialization settings";
+                    }
+
+                }
+                else {
+                    std::cout << "serialization settings is not map";
                 }
             }
 

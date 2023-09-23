@@ -18,6 +18,12 @@ namespace transport_router {
 		static const uint16_t KILOMETER = 1000;
 		static const uint16_t HOUR = 60;
 	
+        struct TransportRouterData {
+            RoutingSettings routing_settings;
+            std::unordered_map<transport_catalogue::details::Stop*, details::RouterByStop> stop_to_router;
+            std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>> edge_id_to_edge;
+            std::unique_ptr<DirectedWeightedGraph<double>> graph;
+        };
 	}
 
     class TransportRouter {
@@ -25,8 +31,21 @@ namespace transport_router {
         TransportRouter(const transport_catalogue::TransportCatalogue& catalogue
             , details::RoutingSettings& routing_settings);
 
+        TransportRouter(const transport_catalogue::TransportCatalogue& catalogue
+            , details::RoutingSettings& routing_settings
+            , std::unordered_map<transport_catalogue::details::Stop*, details::RouterByStop>& stop_to_router 
+            , std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>>& edge_id_to_edge
+            , std::unique_ptr<DirectedWeightedGraph<double>>&& graph
+        );
+
 
         std::optional<details::RouteInfo> GetRouteInfo(const std::string& from_stop, const std::string& to_stop) const;
+
+        const details::RoutingSettings& GetRoutingSettings() const;
+        const std::unordered_map<transport_catalogue::details::Stop*, details::RouterByStop>& GetStopToRouter() const;
+        const std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>>& GetEdgeIdToEdge() const;
+
+        const DirectedWeightedGraph<double>& GetGraph() const;
 
     private:
 

@@ -90,13 +90,13 @@ namespace transport_router {
         };
 
         struct BusEdge {
-            std::string_view bus_name;
+            std::string bus_name;
             size_t span_count = 0;
             double time = 0;
         };
 
         struct StopEdge {
-            std::string_view name;
+            std::string name;
             double time = 0;
         };
 
@@ -111,6 +111,10 @@ namespace transport_router {
         };
     }
 
+}
+namespace serialization {
+
+    struct SerializationSettings { std::string file_name; };
 }
 
 

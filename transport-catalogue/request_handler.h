@@ -13,6 +13,7 @@ namespace request_handler {
         RequestHandler(const transport_catalogue::TransportCatalogue& catalogue
             , const map_renderer::MapRenderer& renderer
             , const transport_router::TransportRouter& router);
+        
 
         // Возвращает информацию о маршруте (запрос Bus)
         transport_catalogue::details::BusInfo GetBusStat(const std::string& bus_name) const;
