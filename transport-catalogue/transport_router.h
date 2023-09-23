@@ -23,6 +23,7 @@ namespace transport_router {
             std::unordered_map<transport_catalogue::details::Stop*, details::RouterByStop> stop_to_router;
             std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>> edge_id_to_edge;
             std::unique_ptr<DirectedWeightedGraph<double>> graph;
+            Router<double>::RoutesInternalData router_internal_data;
         };
 	}
 
@@ -35,8 +36,8 @@ namespace transport_router {
             , details::RoutingSettings& routing_settings
             , std::unordered_map<transport_catalogue::details::Stop*, details::RouterByStop>& stop_to_router 
             , std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>>& edge_id_to_edge
-            , std::unique_ptr<DirectedWeightedGraph<double>>&& graph
-        );
+            , std::unique_ptr<DirectedWeightedGraph<double>>& graph
+            , Router<double>::RoutesInternalData& router_internal_data);
 
 
         std::optional<details::RouteInfo> GetRouteInfo(const std::string& from_stop, const std::string& to_stop) const;
@@ -46,6 +47,7 @@ namespace transport_router {
         const std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>>& GetEdgeIdToEdge() const;
 
         const DirectedWeightedGraph<double>& GetGraph() const;
+        const Router<double>& GetRouter() const;
 
     private:
 

@@ -42,11 +42,29 @@ message StopToRouter {
 	RouterByStop router_by_stop = 2;
 }
 
+message Weight {
+	double weight = 1;
+}
+
+message PrevEdge {
+	uint32 prev_edge = 1;
+}
+
+message RouteInternalData {
+	Weight weight = 1;
+	PrevEdge prev_edge = 2;
+}
+
+message RoutesInternalData {
+    repeated RouteInternalData route_internal_data = 1;
+}
+
 
 message TransportRouterData {
 	RoutingSettings settings = 1;
 	repeated StopToRouter stop_to_router = 2;
 	repeated EdgeIdToEdge edge_id_to_edge = 3;
 	Graph graph = 4;
+	repeated RoutesInternalData routes_inrernal_data = 5;
 
 }

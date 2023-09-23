@@ -58,10 +58,3 @@ uint32_t serialization::CalculateIdStop(It start, It end, std::string_view name)
     auto stop_it = std::find_if(start, end, [&name](const transport_catalogue::details::Stop stop) {return stop.stop_name == name; });
     return std::distance(start, stop_it);
 }
-
-template <typename It>
-uint32_t serialization::CalculateIdBus(It start, It end, std::string_view name) {
-
-    auto bus_it = std::find_if(start, end, [&name](const transport_catalogue::details::Bus bus) {return bus.bus_name == name; });
-    return std::distance(start, bus_it);
-}

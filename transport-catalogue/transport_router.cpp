@@ -14,13 +14,14 @@ namespace transport_router {
         , details::RoutingSettings& routing_settings
         , std::unordered_map<transport_catalogue::details::Stop*, details::RouterByStop>& stop_to_router
         , std::unordered_map<EdgeId, std::variant<details::StopEdge, details::BusEdge>>& edge_id_to_edge
-        , std::unique_ptr<DirectedWeightedGraph<double>>&& graph)
+        , std::unique_ptr<DirectedWeightedGraph<double>>& graph
+        , Router<double>::RoutesInternalData& router_internal_data)
         : catalogue_(catalogue), routing_settings_(routing_settings)
-        , stop_to_router_(std::move(stop_to_router))
-        , edge_id_to_edge_(std::move(edge_id_to_edge))
-        , graph_(std::move(graph))
+        , stop_to_router_(stop_to_router)
+        , edge_id_to_edge_(edge_id_to_edge)
     {
-        router_ = std::make_unique<Router<double>>(*graph_);
+        graph_.swap(graph);
+        router_ = std::make_unique<Router<double>>(*graph_, router_internal_data);
     }
 
     void TransportRouter::SetGraph() {
@@ -150,4 +151,7 @@ namespace transport_router {
         return *graph_;
     }
 
+    const Router<double>& TransportRouter::GetRouter() const {
+        return *router_;
+    }
 }

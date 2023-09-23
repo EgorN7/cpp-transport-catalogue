@@ -334,7 +334,29 @@ namespace serialization {
         }
         *transport_router_data.mutable_graph() = std::move(graph_photo);
 
+        int count_in_bin = 0;
+        for (const auto& routers_internal_data : router.GetRouter().GetRoutesInternalData()) {
 
+            transport_catalogue_protobuf::RoutesInternalData routers_internal_data_photo;
+            for (const auto& router_internal_data : routers_internal_data) {
+                transport_catalogue_protobuf::RouteInternalData route_internal_data_photo;
+                if (router_internal_data) {
+                    transport_catalogue_protobuf::Weight weight_photo;
+                    weight_photo.set_weight(router_internal_data->weight);
+                    *route_internal_data_photo.mutable_weight() = std::move(weight_photo);
+                    if (router_internal_data->prev_edge.has_value()) {
+                        transport_catalogue_protobuf::PrevEdge prev_edge_photo;
+                        prev_edge_photo.set_prev_edge(router_internal_data->prev_edge.value());
+
+                        *route_internal_data_photo.mutable_prev_edge() = prev_edge_photo;
+                    }
+                }
+                *routers_internal_data_photo.add_route_internal_data() = std::move(route_internal_data_photo);
+                ++count_in_bin;
+
+            }
+            *transport_router_data.add_routes_inrernal_data() = std::move(routers_internal_data_photo);
+        }        
         
         return transport_router_data;
     }
@@ -381,20 +403,45 @@ namespace serialization {
             edges.emplace_back(std::move(edge));
         }
 
-        std::vector<graph::IncidenceList> inc_lists;
-        inc_lists.reserve(transport_router_data_proto.graph().incidence_lists_size());
+        std::vector<graph::IncidenceList> incidence_lists;
+        incidence_lists.reserve(transport_router_data_proto.graph().incidence_lists_size());
         for (int i = 0; i < transport_router_data_proto.graph().incidence_lists_size(); ++i) {
-            graph::IncidenceList inc_list;
-            inc_list.reserve(transport_router_data_proto.graph().incidence_lists(i).edges_size());
+            graph::IncidenceList incidence_list;
+            incidence_list.reserve(transport_router_data_proto.graph().incidence_lists(i).edges_size());
             for (int j = 0; j < transport_router_data_proto.graph().incidence_lists(i).edges_size(); ++j) {
-                inc_list.emplace_back(transport_router_data_proto.graph().incidence_lists(i).edges(j));
+                incidence_list.emplace_back(transport_router_data_proto.graph().incidence_lists(i).edges(j));
             }
-            inc_lists.emplace_back(std::move(inc_list));
+            incidence_lists.emplace_back(std::move(incidence_list));
         }
 
         catalogue_base.transport_router_data.graph = std::make_unique<graph::DirectedWeightedGraph<double>>(2 * catalogue_base.catalogue.GetStopnameToStop().size());
         catalogue_base.transport_router_data.graph->ModifyEdges() = std::move(edges);
-        catalogue_base.transport_router_data.graph->ModifyIncidenceLists() = std::move(inc_lists);
+        catalogue_base.transport_router_data.graph->ModifyIncidenceLists() = std::move(incidence_lists);
+
+
+        graph::Router<double>::RoutesInternalData router_internal_data;
+        router_internal_data.reserve(transport_router_data_proto.routes_inrernal_data_size());
+        for (int i = 0; i < transport_router_data_proto.routes_inrernal_data_size(); ++i) {
+            std::vector<std::optional<graph::Router<double>::RouteInternalData>> route_internal_data;
+            route_internal_data.reserve(transport_router_data_proto.routes_inrernal_data(i).route_internal_data_size());
+            for (int j = 0; j < transport_router_data_proto.routes_inrernal_data(i).route_internal_data_size(); ++j) {
+                if (transport_router_data_proto.routes_inrernal_data(i).route_internal_data(j).has_weight()) {
+                    graph::Router<double>::RouteInternalData internal_data;
+                    internal_data.weight = transport_router_data_proto.routes_inrernal_data(i).route_internal_data(j).weight().weight();
+                    if (transport_router_data_proto.routes_inrernal_data(i).route_internal_data(j).has_prev_edge()) {
+                        internal_data.prev_edge = transport_router_data_proto.routes_inrernal_data(i).route_internal_data(j).prev_edge().prev_edge();
+                    } else {
+                        internal_data.prev_edge = std::nullopt;
+                    }
+                    route_internal_data.emplace_back(internal_data);
+                } else {
+                    route_internal_data.emplace_back(std::nullopt);
+                }
+            }
+            router_internal_data.emplace_back(std::move(route_internal_data));
+        }
+        catalogue_base.transport_router_data.router_internal_data = std::move(router_internal_data);
+
     }
     
 }//end namespace serialization

@@ -58,7 +58,8 @@ int main(int argc, char* argv[]) {
             , catalogue_base.transport_router_data.routing_settings
             , catalogue_base.transport_router_data.stop_to_router
             , catalogue_base.transport_router_data.edge_id_to_edge
-            , std::move(catalogue_base.transport_router_data.graph));
+            , catalogue_base.transport_router_data.graph
+            , catalogue_base.transport_router_data.router_internal_data);
 
         renderer.FillMap(catalogue_base.catalogue);
         request_handler::RequestHandler handler(catalogue_base.catalogue, renderer, router);
